@@ -28,7 +28,7 @@ Entry function for Isolate
     sendPort.send(result);
   }
  ```
-### The isolate runs the computeFactorials function in the background and sends the result back to the main thread, which is then displayed in the UI.
+##### The isolate runs the computeFactorials function in the background and sends the result back to the main thread, which is then displayed in the UI.
 
 Heavy task Method
  ``` xml
