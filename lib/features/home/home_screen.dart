@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_isolate/components/buttons/elevate_button.dart';
@@ -61,12 +63,20 @@ class _HeavyComputationPageState extends State<HomeScreen> with SingleTickerProv
               onTap: _isComputing ? null : _computationInMainThread,
             ),
             const SizedBox(height: 20),
-            Text('Background Thread', style: TextStyles.text18_500.copyWith(color: dark)),
+            Text('Background Thread Using Compute', style: TextStyles.text18_500.copyWith(color: dark)),
             const SizedBox(height: 06),
             ElevateButton(
               width: double.infinity,
               label: 'Start Heavy Computation',
-              onTap: _isComputing ? null : _computationInBackgroundThread,
+              onTap: _isComputing ? null : _computationUsingCompute,
+            ),
+            const SizedBox(height: 20),
+            Text('Background Thread Using Isolate', style: TextStyles.text18_500.copyWith(color: dark)),
+            const SizedBox(height: 06),
+            ElevateButton(
+              width: double.infinity,
+              label: 'Start Heavy Computation',
+              onTap: _isComputing ? null : _computationUsingIsolate,
             ),
             const SizedBox(height: 32),
             Center(child: Text(_result, textAlign: TextAlign.center, style: TextStyles.text18_500.copyWith(color: dark))),
@@ -87,7 +97,7 @@ class _HeavyComputationPageState extends State<HomeScreen> with SingleTickerProv
     setState(() {});
   }
 
-  Future<void> _computationInBackgroundThread() async {
+  Future<void> _computationUsingCompute() async {
     _isComputing = true;
     _result = 'Computing on background thread...';
     setState(() {});
@@ -96,6 +106,30 @@ class _HeavyComputationPageState extends State<HomeScreen> with SingleTickerProv
     _result = 'Computed factorial sum: $result';
     _isComputing = false;
     setState(() {});
+  }
+
+  Future<void> _computationUsingIsolate() async {
+    _isComputing = true;
+    _result = 'Computing on background thread with Isolate...';
+    setState(() {});
+
+    var result = await _runIsolate(1000);
+    _result = 'Computed factorial sum with Isolate: $result';
+    _isComputing = false;
+    setState(() {});
+  }
+
+  Future<int> _runIsolate(int limit) async {
+    final receivePort = ReceivePort();
+    await Isolate.spawn(_isolateEntry, [receivePort.sendPort, limit]);
+    return await receivePort.first;
+  }
+
+  void _isolateEntry(List<dynamic> args) {
+    final sendPort = args[0] as SendPort;
+    final limit = args[1] as int;
+    final result = computeFactorials(limit);
+    sendPort.send(result);
   }
 }
 
